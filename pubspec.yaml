@@ -1,4 +1,4 @@
-name: utf-7
+name: utf7
 description: Encodes/decodes the "mail-safe transformation format of unicode" utf-7, rfc 2152
 version: 0.0.1
 # homepage: https://www.example.com
