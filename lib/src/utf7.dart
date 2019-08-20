@@ -4,13 +4,12 @@ part of utf7;
 class Utf7 {
   // set D (directly encoded characters): A-Za-z0-9'()´-./:?
   // set O (optional direct characters): !"#$%&*;<=>@[]^_`{|}
-  //
   // set B (base64 characters): base64, but without =
 
   /// Checks if the given [char] is part of set D (directly encoded characters)
-  static bool _isOnlyDirectlyEncoded(int char) {
-    if(char < 39 || char > 122) return false;
-    if((65 <= char && char <= 90 /* A-Z */) ||
+  static bool _isInStrictSet(int char) {
+    if (char < 39 || char > 122) return false;
+    if ((65 <= char && char <= 90 /* A-Z */) ||
         (97 <= char && char <= 122 /* a-z */) ||
         (44 <= char && char <= 58) /* 0-9 and ´-./: */ ||
         (39 <= char && char <= 41 /* '() */) ||
@@ -18,51 +17,83 @@ class Utf7 {
     return false; // any other character in between
   }
 
-  /// Checks if the given [char] is part of set O *OR D* (for simplicity)
-  static bool _isDirectlyEncoded(int char) {
-    if(char < 33 || char > 125 || char == 92 || char == 43) return false;
+  /// Checks if the given [char] is part of set O *OR D*
+  static bool _isInLooseSet(int char) {
+    if (char == 10 || char == 13 || char == 9) return true;
+    if (char < 32 || char > 125 || char == 92 || char == 43) return false;
     return true;
   }
 
+  /// Encodes the given [string] with the modified base64 algorithm defined in
+  /// rfc 2152
+  static String encodeModifiedBase64(String string) {
+    List<int> out = [];
+    for (int i = 0; i < string.length; i++) {
+      out.add(string.codeUnitAt(i) >> 8);
+      out.add(string.codeUnitAt(i) & 0xFF);
+    }
+    return base64Encode(out).replaceAll("=", "");
+  }
 
-  /// Encodes the utf-8 [input] to the corresponding utf-7 string, also encodes
+  /// decodes the given [modifiedBase64] string to standard utf-16 text
+  static String decodeModifiedBase64(String modifiedBase64) {
+    List<int> bytes = base64Decode(base64.normalize(modifiedBase64));
+    StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < bytes.length; i = i + 2) {
+      buffer.writeCharCode(bytes[i] << 8 | bytes[i + 1]);
+    }
+    return buffer.toString();
+  }
+
+  /// Encodes [string] to utf-7. Only characters not in the [setTest] are
+  /// encoded.
+  static String _encode(String string, bool Function(int char) setTest) {
+    StringBuffer buffer = new StringBuffer();
+    int index = 0;
+    int char, shiftStart;
+    void encodeShifted(bool inclusiveEnd) {
+      buffer.writeCharCode(43); // +
+      buffer.write(
+          Utf7.encodeModifiedBase64(string.substring(shiftStart, index)));
+      buffer.writeCharCode(45); // -
+      shiftStart = null;
+    }
+
+    while (index < string.length) {
+      char = string.codeUnitAt(index);
+      if (setTest(char)) {
+        if (shiftStart != null) encodeShifted(false);
+        buffer.writeCharCode(char);
+      } else if (shiftStart == null) shiftStart = index;
+      index++;
+    }
+    if (shiftStart != null) encodeShifted(true);
+    return buffer.toString();
+  }
+
+  /// Encodes the utf-8 [string] to the corresponding utf-7 string, also encodes
   /// optional direct characters
   ///
   /// Should be used if the utf-7 string is used at a place where those
   /// characters have a special meaning.
-  static String encodeAll(String input) {
-
+  static String encodeAll(String string) {
+    return _encode(string, _isInStrictSet);
   }
 
-  /// Encodes the utf-8 [input] to the corresponding utf-7 string.
+  /// Encodes the utf-8 [string] to the corresponding utf-7 string.
   ///
   /// Does not encode "set O" characters, [encodeAll] should be used if used
   /// in a place where those characters have special meaning.
-  static String encode(String input) {
-    List<int> chars = [];
-    int index;
-    int char;
-    List<int> charsToShift = [];
-    bool shifted = false;
-    while (index < input.length) {
-      char = input.codeUnitAt(index);
-      if (32 <= char && char <= 126) {
-        if (shifted) {
-          chars.add(38); // +
-          // add base64 encoded string
-          chars.add(45); // -
-          shifted = false;
-        }
-        chars.add(char);
-      } else {
-        charsToShift.add(char);
-        shifted = true;
-      }
-      index++;
-    }
-    return String.fromCharCodes(chars);
+  static String encode(String string) {
+    return _encode(string, _isInLooseSet);
   }
 
-  /// Decodes the utf-7 [input] to the corresponding utf-8 string.
-  static String decode(String input) {}
+  /// Decodes the utf-7 [string] to the corresponding utf-8 string.
+  static String decode(String string) {
+    return string.replaceAllMapped(new RegExp(r"\+([A-Za-z0-9]*)-?"),
+        (Match match) {
+      if (match[1].isEmpty) return "+";
+      return decodeModifiedBase64(match[1]);
+    });
+  }
 }

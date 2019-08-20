@@ -1,7 +1,4 @@
-A library for Dart developers.
-
-Created from templates made available by Stagehand under a BSD-style
-[license](https://github.com/dart-lang/stagehand/blob/master/LICENSE).
+Provides methods to encode/decode utf-7 strings or adapt the modified base64 for custom methods.
 
 ## Usage
 
@@ -11,12 +8,15 @@ A simple usage example:
 import 'package:utf7/utf7.dart';
 
 main() {
-  var awesome = new Awesome();
+  // encode/decode strings
+  print(Utf7.encode("ûtf-8 chäräctérs")); // +APs-tf-8 ch+AOQ-r+AOQ-ct+AOk-rs
+  print(Utf7.decode("+APs-tf-8 ch+AOQ-r+AOQ-ct+AOk-rs")); // ûtf-8 chäräctérs
+  // encodeAll additionally encodes characters that could be control characters
+  // wherever the encoded string is used
+  print(Utf7.encodeAll("A b\r\nc\$")); // A+ACA-b+AA0ACg-c+ACQ-
+
+  // encode/decode modified base64 sequences (the part between + and -)
+  print(Utf7.encodeModifiedBase64("û")); // AOQ
+  print(Utf7.decodeModifiedBase64("AOQ")); // û
 }
 ```
-
-## Features and bugs
-
-Please file feature requests and bugs at the [issue tracker][tracker].
-
-[tracker]: http://example.com/issues/replaceme
