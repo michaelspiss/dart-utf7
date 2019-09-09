@@ -61,7 +61,10 @@ class Utf7 {
 
     while (index < string.length) {
       char = string.codeUnitAt(index);
-      if (setTest(char)) {
+      if (char == 43 /* + */) {
+        if (shiftStart != null) encodeShifted(false);
+        buffer.write("+-");
+      } else if (setTest(char)) {
         if (shiftStart != null) encodeShifted(false);
         buffer.writeCharCode(char);
       } else if (shiftStart == null) shiftStart = index;
