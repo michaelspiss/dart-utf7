@@ -93,7 +93,7 @@ class Utf7 {
 
   /// Decodes the utf-7 [string] to the corresponding utf-8 string.
   static String decode(String string) {
-    return string.replaceAllMapped(new RegExp(r"\+([A-Za-z0-9]*)-?"),
+    return string.replaceAllMapped(new RegExp(r'\+([A-Za-z0-9/+]*)-?'),
         (Match match) {
       if (match[1].isEmpty) return "+";
       return decodeModifiedBase64(match[1]);
