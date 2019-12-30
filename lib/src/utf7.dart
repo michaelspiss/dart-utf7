@@ -27,19 +27,19 @@ class Utf7 {
   /// Encodes the given [string] with the modified base64 algorithm defined in
   /// rfc 2152
   static String encodeModifiedBase64(String string) {
-    List<int> out = [];
-    for (int i = 0; i < string.length; i++) {
+    var out = <int>[];
+    for (var i = 0; i < string.length; i++) {
       out.add(string.codeUnitAt(i) >> 8);
       out.add(string.codeUnitAt(i) & 0xFF);
     }
-    return base64Encode(out).replaceAll("=", "");
+    return base64Encode(out).replaceAll('=', '');
   }
 
   /// decodes the given [modifiedBase64] string to standard utf-16 text
   static String decodeModifiedBase64(String modifiedBase64) {
-    List<int> bytes = base64Decode(base64.normalize(modifiedBase64));
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < bytes.length; i = i + 2) {
+    var bytes = base64Decode(base64.normalize(modifiedBase64));
+    var buffer = new StringBuffer();
+    for (var i = 0; i < bytes.length; i = i + 2) {
       buffer.writeCharCode(bytes[i] << 8 | bytes[i + 1]);
     }
     return buffer.toString();
@@ -48,8 +48,8 @@ class Utf7 {
   /// Encodes [string] to utf-7. Only characters not in the [setTest] are
   /// encoded.
   static String _encode(String string, bool Function(int char) setTest) {
-    StringBuffer buffer = new StringBuffer();
-    int index = 0;
+    var buffer = new StringBuffer();
+    var index = 0;
     int char, shiftStart;
     void encodeShifted(bool inclusiveEnd) {
       buffer.writeCharCode(43); // +
@@ -63,11 +63,13 @@ class Utf7 {
       char = string.codeUnitAt(index);
       if (char == 43 /* + */) {
         if (shiftStart != null) encodeShifted(false);
-        buffer.write("+-");
+        buffer.write('+-');
       } else if (setTest(char)) {
         if (shiftStart != null) encodeShifted(false);
         buffer.writeCharCode(char);
-      } else if (shiftStart == null) shiftStart = index;
+      } else {
+        shiftStart ??= index;
+      }
       index++;
     }
     if (shiftStart != null) encodeShifted(true);
@@ -95,7 +97,7 @@ class Utf7 {
   static String decode(String string) {
     return string.replaceAllMapped(new RegExp(r'\+([A-Za-z0-9/+]*)-?'),
         (Match match) {
-      if (match[1].isEmpty) return "+";
+      if (match[1].isEmpty) return '+';
       return decodeModifiedBase64(match[1]);
     });
   }
