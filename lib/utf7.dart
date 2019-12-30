@@ -2,4 +2,4 @@ library utf7;
 
 import 'dart:convert';
 
-part "src/utf7.dart";
+part 'src/utf7.dart';
