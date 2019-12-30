@@ -38,7 +38,7 @@ class Utf7 {
   /// decodes the given [modifiedBase64] string to standard utf-16 text
   static String decodeModifiedBase64(String modifiedBase64) {
     var bytes = base64Decode(base64.normalize(modifiedBase64));
-    var buffer = new StringBuffer();
+    var buffer = StringBuffer();
     for (var i = 0; i < bytes.length; i = i + 2) {
       buffer.writeCharCode(bytes[i] << 8 | bytes[i + 1]);
     }
@@ -48,7 +48,7 @@ class Utf7 {
   /// Encodes [string] to utf-7. Only characters not in the [setTest] are
   /// encoded.
   static String _encode(String string, bool Function(int char) setTest) {
-    var buffer = new StringBuffer();
+    var buffer = StringBuffer();
     var index = 0;
     int char, shiftStart;
     void encodeShifted(bool inclusiveEnd) {
@@ -95,7 +95,7 @@ class Utf7 {
 
   /// Decodes the utf-7 [string] to the corresponding utf-8 string.
   static String decode(String string) {
-    return string.replaceAllMapped(new RegExp(r'\+([A-Za-z0-9/+]*)-?'),
+    return string.replaceAllMapped(RegExp(r'\+([A-Za-z0-9/+]*)-?'),
         (Match match) {
       if (match[1].isEmpty) return '+';
       return decodeModifiedBase64(match[1]);
