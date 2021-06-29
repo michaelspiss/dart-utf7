@@ -50,7 +50,7 @@ class Utf7 {
   static String _encode(String string, bool Function(int char) setTest) {
     var buffer = StringBuffer();
     var index = 0;
-    int char, shiftStart;
+    var char, shiftStart = null;
     void encodeShifted(bool inclusiveEnd) {
       buffer.writeCharCode(43); // +
       buffer.write(
@@ -97,8 +97,8 @@ class Utf7 {
   static String decode(String string) {
     return string.replaceAllMapped(RegExp(r'\+([A-Za-z0-9/+]*)-?'),
         (Match match) {
-      if (match[1].isEmpty) return '+';
-      return decodeModifiedBase64(match[1]);
+      if (match[1]!.isEmpty) return '+';
+      return decodeModifiedBase64(match[1]!);
     });
   }
 }
